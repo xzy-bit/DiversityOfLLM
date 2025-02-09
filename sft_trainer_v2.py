@@ -30,7 +30,7 @@ class SFTTrainer(Trainer):
 
         return training_logs
 
-    def gem_loss(self, logits, labels, beta=0.7, ignore_index=-100, h="logsigmoid"):
+    def gem_loss(self, logits, labels, num_items_in_batch, beta=0.7, ignore_index=-100, h="logsigmoid"):
         shift_logits = logits[..., :-1, :].contiguous()
         shift_labels = labels[..., 1:].contiguous()
 
@@ -58,23 +58,33 @@ class SFTTrainer(Trainer):
             gene_log_probs, dim=-1, index=shift_labels.unsqueeze(-1)
         )
 
-        loss = -torch.sum(
-            q_probs * weights * (real_log_probs - gene_log_probs), dim=-1
-        ).mean()
+        if num_items_in_batch is not None:
+            loss = -torch.sum(
+                q_probs * weights * (real_log_probs - gene_log_probs), dim=-1
+            ).sum() / num_items_in_batch
+        else:
+            loss = -torch.sum(
+                q_probs * weights * (real_log_probs - gene_log_probs), dim=-1
+            ).mean()
 
         return loss
 
-    # copied from Transformer's trainer with
-    def compute_loss(self, model, inputs, return_outputs=False):
+
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         """
         How the loss is computed by Trainer. By default, all models return the loss in the first element.
 
         Subclass and override for custom behavior.
         """
-        if self.label_smoother is not None and "labels" in inputs:
+        if (self.label_smoother is not None or self.compute_loss_func is not None) and "labels" in inputs:
             labels = inputs.pop("labels")
         else:
             labels = None
+        if self.model_accepts_loss_kwargs:
+            loss_kwargs = {}
+            if num_items_in_batch is not None:
+                loss_kwargs["num_items_in_batch"] = num_items_in_batch
+            inputs = {**inputs, **loss_kwargs}
         outputs = model(**inputs)
         # Save past state if it exists
         # TODO: this needs to be fixed and made cleaner later.
@@ -87,7 +97,10 @@ class SFTTrainer(Trainer):
                 model_name = unwrapped_model.base_model.model._get_name()
             else:
                 model_name = unwrapped_model._get_name()
-            if model_name in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.values():
+            # User-defined compute_loss function
+            if self.compute_loss_func is not None:
+                loss = self.compute_loss_func(outputs, labels, num_items_in_batch=num_items_in_batch)
+            elif model_name in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.values():
                 loss = self.label_smoother(outputs, labels, shift_labels=True)
             else:
                 loss = self.label_smoother(outputs, labels)
@@ -102,11 +115,15 @@ class SFTTrainer(Trainer):
                 loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
             else:
                 loss = self.gem_loss(
-                    outputs.logits,
+                    outputs.logits, 
                     inputs["labels"],
-                    beta=self.args.gem_beta,
-                    h=self.args.gem_h,
+                    num_items_in_batch=num_items_in_batch, 
+                    beta=self.args.gem_beta, 
+                    h=self.args.gem_h
                 )
+
+        if self.args.average_tokens_across_devices and self.model_accepts_loss_kwargs:
+            loss *= self.accelerator.num_processes
 
         # ziniu add logs
         if not self.control.should_evaluate:
@@ -120,13 +137,8 @@ class SFTTrainer(Trainer):
 
         return (loss, outputs) if return_outputs else loss
 
-    def _maybe_log_save_evaluate(
-        self, tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval
-    ):
-        if (
-            self.control.should_log
-            and self.state.global_step > self._globalstep_last_logged
-        ):
+    def _maybe_log_save_evaluate(self, tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval):
+        if self.control.should_log and self.state.global_step > self._globalstep_last_logged:
             if is_torch_xla_available():
                 xm.mark_step()
 
@@ -138,24 +150,12 @@ class SFTTrainer(Trainer):
             # reset tr_loss to zero
             tr_loss -= tr_loss
 
-            logs["loss"] = round(
-                tr_loss_scalar
-                / (self.state.global_step - self._globalstep_last_logged),
-                4,
-            )
+            logs["loss"] = round(tr_loss_scalar / (self.state.global_step - self._globalstep_last_logged), 4)
             if grad_norm is not None:
-                logs["grad_norm"] = round(
-                    (
-                        grad_norm.detach().item()
-                        if isinstance(grad_norm, torch.Tensor)
-                        else grad_norm
-                    ),
-                    4,
-                )
+                logs["grad_norm"] = round(grad_norm.detach().item(), 4) if isinstance(grad_norm, torch.Tensor) else grad_norm
             logs["learning_rate"] = self._get_learning_rate()
-            ### update logs
-            if getattr(self, "training_logs", {}):
-                logs.update(getattr(self, "training_logs", {}))
+            if getattr(self, "training_logs", None):
+                logs.update(self.training_logs)
 
             self._total_loss_scalar += tr_loss_scalar
             self._globalstep_last_logged = self.state.global_step
@@ -169,9 +169,8 @@ class SFTTrainer(Trainer):
 
         if self.control.should_save:
             self._save_checkpoint(model, trial, metrics=metrics)
-            self.control = self.callback_handler.on_save(
-                self.args, self.state, self.control
-            )
+            self.control = self.callback_handler.on_save(self.args, self.state, self.control)
+
 
 def chunked_entropy_from_logits(chunk_logits, batch_size=None):
     """

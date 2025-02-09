@@ -30,7 +30,7 @@ deepspeed train.py \
     --evaluation_strategy "epoch" \
     --save_strategy "no" \
     --loss "gem" \
-    --gem_beta 0.75 \
+    --gem_beta 0.7 \
     --gem_h "logsigmoid" \
     --learning_rate 2e-5 \
     --lr_scheduler_type cosine \

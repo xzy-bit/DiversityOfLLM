@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TrainingArguments(transformers.TrainingArguments):
+    adam_beta2: float = field(default=0.95, metadata={"help": "Beta2 for AdamW"})
     loss: str = field(
         default="gem", metadata={"help": "Loss name", "choices": ["gem", "ce"]}
     )
