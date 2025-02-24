@@ -2,16 +2,14 @@
 
 Welcome to the official PyTorch implementation of **GEM**! 🎉
 
-GEM is developed in the [paper](https://openreview.net/forum?id=dulz3WVhMR) "Preserving Diversity in Supervised Fine-tuning of Large Language Models", which is accepted by ICLR 2025.
+GEM was introduced in our [ICLR 2025 paper](https://openreview.net/forum?id=dulz3WVhMR) "Preserving Diversity in Supervised Fine-tuning of Large Language Models". This work was previously titled "Entropic Distribution Matching in Supervised Fine-tuning of LLMs: Less Overfitting and Better Diversity" and received the Best Paper Runner-up Award at the NeurIPS 2024 FITML Workshop.
 
 
 <img src='./img/gem_vs_ce.png' width='700'>
 
-
 GEM can replace the CE loss during SFT to preserve diversity and mitigate overfitting. 🌍✨
 
-
-
+For more insights on GEM's potential to enhance RL training through improved cold-start strategies, check out our blog post: ["Can Better Cold-Start Strategies Improve RL Training for LLMs?"](https://tangible-polo-203.notion.site/Can-Better-Cold-Start-Strategies-Improve-RL-Training-for-LLMs-17aa0742a51680828616c867ed53bc6b)
 
 ## Quickstart Guide 💻
 

@@ -24,7 +24,7 @@ class SFTTrainer(Trainer):
 
         entropy = chunked_entropy_from_logits(
             shift_logits,
-            chunk_size=max(1, shift_logits.size(0) // 4),
+            batch_size=max(1, shift_logits.size(0) // 4),
         ).mean()
         training_logs = {"entropy": round(entropy.item(), 2)}
 
