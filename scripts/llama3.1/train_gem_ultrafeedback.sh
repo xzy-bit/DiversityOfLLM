@@ -7,14 +7,14 @@ export HF_DATASETS_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export FLASH_ATTENTION_DETERMINISTIC="1"
 
-TRAIN_TOKENIZED_FILE="./data/ultrafeedback_sft_train_llama3_tokenized.jsonl"
-TEST_TOKENIZED_FILE="./data/ultrafeedback_sft_test_llama3_tokenized.jsonl"
+TRAIN_TOKENIZED_FILE="./data/ultrafeedback_sft_train_llama3.1_tokenized.jsonl"
+TEST_TOKENIZED_FILE="./data/ultrafeedback_sft_test_llama3.1_tokenized.jsonl"
 
-MODEL_NAME_OR_PATH="meta-llama/Meta-Llama-3-8B"
+MODEL_NAME_OR_PATH="meta-llama/Llama-3.1-8B"
 SEED=1234
 
 TIME_STEP=`date "+%Y-%m-%d-%H-%M-%S"`
-OUTPUT_DIR="./log/sft_gem-llama3_8b-ultrafeedback-$TIME_STEP-$SEED"
+OUTPUT_DIR="./log/sft_ce-llama3.1-8b-ultrafeedback-$TIME_STEP-$SEED"
 
 mkdir -p $OUTPUT_DIR
 

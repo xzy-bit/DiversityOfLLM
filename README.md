@@ -4,7 +4,6 @@ Welcome to the official PyTorch implementation of **GEM**! 🎉
 
 GEM was introduced in our [ICLR 2025 paper](https://openreview.net/forum?id=dulz3WVhMR) "Preserving Diversity in Supervised Fine-tuning of Large Language Models". This work was previously titled "Entropic Distribution Matching in Supervised Fine-tuning of LLMs: Less Overfitting and Better Diversity" and received the Best Paper Runner-up Award at the NeurIPS 2024 FITML Workshop.
 
-
 <img src='./img/gem_vs_ce.png' width='700'>
 
 GEM can replace the CE loss during SFT to preserve diversity and mitigate overfitting. 🌍✨
@@ -23,7 +22,14 @@ conda activate gem
 pip install -r requirements.txt
 ```
 
-Note that the version of packages in `requirements.txt` is used in the paper. If you use a higher version of transformers (>= 4.46.0), you may need to follow the code in `sft_trainer_v2.py` to adapt to the new version.
+Note that the version of packages in `requirements.txt` is used in the paper. You may use a higher version of transformers (>= 4.46.0) that fixes the potential bug of gradient accumulation.
+
+We also provide a **Triton** implementation of GEM loss in the `utils` folder, which may be faster than the original implementation when training large-scale models. Please refer to the [README](utils/README.md) for more details. You may use this implementation with the following command:
+
+```bash
+python train.py --loss gem_triton
+```
+
 
 ### Training 🏋️‍♂️
 
@@ -63,9 +69,26 @@ bash scripts/eval/gsm8k_voting_eval.sh
 bash scripts/eval/creative_writing.sh
 ```
 
+## To Do
+
+- [ ] Add the adaptive mechanism for choosing the hyper-parameter $\beta$.
+
 ## 📜 Citation
 
 If you find this repository helpful in your research or projects, please consider citing the GEM paper in your academic work. Your support is much appreciated! 🙌
+
+
+```
+@inproceedings{li2025preserving,
+  title={Preserving Diversity in Supervised Fine-Tuning of Large Language Models},
+  author={Ziniu Li and Congliang Chen and Tian Xu and Zeyu Qin and Jiancong Xiao and Zhi-Quan Luo and Ruoyu Sun},
+  booktitle={The Thirteenth International Conference on Learning Representations},
+  year={2025},
+  url={https://openreview.net/forum?id=NQEe7B7bSw}
+}
+```
+
+Our work was previously titled "Entropic Distribution Matching in Supervised Fine-tuning of LLMs: Less Overfitting and Better Diversity", available on arXiv.
 
 ```bibtex
 @article{li2024entropic,

@@ -9,6 +9,7 @@ from transformers.trainer import (
     is_torch_xla_available,
 )
 from typing import List, Optional, Dict
+from utils.gem_triton_loss import GEMLoss
 
 
 class SFTTrainer(Trainer):
@@ -61,6 +62,23 @@ class SFTTrainer(Trainer):
         loss = -torch.sum(
             q_probs * weights * (real_log_probs - gene_log_probs), dim=-1
         ).mean()
+
+        return loss
+
+    def gem_loss_triton(self, logits, labels, beta=0.7, ignore_index=-100, h="linear"):
+        if h != "linear":
+            print(f"[warning] only linear is supported for gem_loss_triton for now. Got {h}.")
+
+        gem_loss_func = GEMLoss(beta=beta, ignore_index=ignore_index, reduction="mean")
+
+        shift_logits = logits[..., :-1, :].contiguous()
+        shift_labels = labels[..., 1:].contiguous()
+
+        mask = shift_labels != -100
+        shift_logits = shift_logits[mask]
+        shift_labels = shift_labels[mask]
+
+        loss = gem_loss_func(shift_logits, shift_labels)
 
         return loss
 

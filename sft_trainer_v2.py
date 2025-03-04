@@ -9,6 +9,7 @@ from transformers.trainer import (
     is_torch_xla_available,
 )
 from typing import List, Optional, Dict
+from utils.gem_triton_loss import GEMLoss
 
 
 class SFTTrainer(Trainer):
@@ -69,6 +70,28 @@ class SFTTrainer(Trainer):
 
         return loss
 
+    def gem_loss_triton(self, logits, labels, num_items_in_batch, beta=0.7, ignore_index=-100, h="linear"):
+        assert h == "linear", "Only linear is supported for gem_loss_triton for now."
+
+        if num_items_in_batch is not None:
+            gem_loss_func = GEMLoss(beta=beta, ignore_index=ignore_index, reduction="none")
+        else:
+            gem_loss_func = GEMLoss(beta=beta, ignore_index=ignore_index, reduction="mean")
+
+        shift_logits = logits[..., :-1, :].contiguous()
+        shift_labels = labels[..., 1:].contiguous()
+
+        mask = shift_labels != -100
+        shift_logits = shift_logits[mask]
+        shift_labels = shift_labels[mask]
+
+        loss = gem_loss_func(shift_logits, shift_labels)
+
+        if num_items_in_batch is not None:
+            loss = loss.sum() / num_items_in_batch
+        else:
+            loss = loss
+        return loss
 
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         """
@@ -113,8 +136,16 @@ class SFTTrainer(Trainer):
             # We don't use .loss here since the model may return tuples instead of ModelOutput.
             if self.args.loss == "ce" or self.control.should_evaluate:
                 loss = outputs["loss"] if isinstance(outputs, dict) else outputs[0]
-            else:
+            elif self.args.loss == "gem":
                 loss = self.gem_loss(
+                    outputs.logits, 
+                    inputs["labels"],
+                    num_items_in_batch=num_items_in_batch, 
+                    beta=self.args.gem_beta, 
+                    h=self.args.gem_h
+                )
+            elif self.args.loss == "gem_triton":
+                loss = self.gem_loss_triton(
                     outputs.logits, 
                     inputs["labels"],
                     num_items_in_batch=num_items_in_batch, 
@@ -137,7 +168,7 @@ class SFTTrainer(Trainer):
 
         return (loss, outputs) if return_outputs else loss
 
-    def _maybe_log_save_evaluate(self, tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval):
+    def _maybe_log_save_evaluate(self, tr_loss, grad_norm, model, trial, epoch, ignore_keys_for_eval, start_time):
         if self.control.should_log and self.state.global_step > self._globalstep_last_logged:
             if is_torch_xla_available():
                 xm.mark_step()
@@ -152,7 +183,7 @@ class SFTTrainer(Trainer):
 
             logs["loss"] = round(tr_loss_scalar / (self.state.global_step - self._globalstep_last_logged), 4)
             if grad_norm is not None:
-                logs["grad_norm"] = round(grad_norm.detach().item(), 4) if isinstance(grad_norm, torch.Tensor) else grad_norm
+                logs["grad_norm"] = grad_norm.detach().item() if isinstance(grad_norm, torch.Tensor) else grad_norm
             logs["learning_rate"] = self._get_learning_rate()
             if getattr(self, "training_logs", None):
                 logs.update(self.training_logs)
@@ -161,14 +192,18 @@ class SFTTrainer(Trainer):
             self._globalstep_last_logged = self.state.global_step
             self.store_flos()
 
-            self.log(logs)
+            self.log(logs, start_time)
 
         metrics = None
         if self.control.should_evaluate:
             metrics = self._evaluate(trial, ignore_keys_for_eval)
+            is_new_best_metric = self._determine_best_metric(metrics=metrics, trial=trial)
+
+            if self.args.save_strategy == SaveStrategy.BEST:
+                self.control.should_save = is_new_best_metric
 
         if self.control.should_save:
-            self._save_checkpoint(model, trial, metrics=metrics)
+            self._save_checkpoint(model, trial)
             self.control = self.callback_handler.on_save(self.args, self.state, self.control)
 
 

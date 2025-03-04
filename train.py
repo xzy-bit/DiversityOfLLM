@@ -31,7 +31,12 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint
 
-from sft_trainer import SFTTrainer
+from packaging import version
+
+if version.parse(transformers.__version__) >= version.parse("4.46.0"):
+    from sft_trainer_v2 import SFTTrainer
+else:
+    from sft_trainer import SFTTrainer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,11 +46,11 @@ logger = logging.getLogger(__name__)
 class TrainingArguments(transformers.TrainingArguments):
     adam_beta2: float = field(default=0.95, metadata={"help": "Beta2 for AdamW"})
     loss: str = field(
-        default="gem", metadata={"help": "Loss name", "choices": ["gem", "ce"]}
+        default="gem", metadata={"help": "Loss name", "choices": ["gem", "ce", "gem_triton"]}
     )
-    gem_beta: float = field(default=0.7, metadata={"help": "Hyper-parameter in GEM."})
+    gem_beta: float = field(default=0.7, metadata={"help": "Hyper-parameter in GEM. A value between 0 and 1. A value close to 1.0 makes GEM behave more like CE, while a value close to 0.0 preserves more diversity."})
     gem_h: str = field(
-        default="logsigmoid", metadata={"help": "Hyper-parameter in GEM.", "choices": ["logsigmoid", "linear"]}
+        default="linear", metadata={"help": "Function $h$ in GEM. The 'logsigmoid' function is more adaptive, but the difference between 'logsigmoid' and 'linear' is usually negligible.", "choices": ["logsigmoid", "linear"]}
     )
 
 
@@ -227,7 +232,7 @@ def main():
     train_result = trainer.train(resume_from_checkpoint=checkpoint)
     if "llama-3" in model.config.name_or_path.lower() and isinstance(model.generation_config.eos_token_id, int):
         model.generation_config.eos_token_id = [128001, 128009]
-    trainer.save_model()  # Saves the tokenizer too for easy upload
+    # trainer.save_model()  # Saves the tokenizer too for easy upload
 
     metrics = train_result.metrics
     metrics["train_samples"] = len(train_dataset)
