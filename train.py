@@ -52,6 +52,9 @@ class TrainingArguments(transformers.TrainingArguments):
     gem_h: str = field(
         default="linear", metadata={"help": "Function $h$ in GEM. The 'logsigmoid' function is more adaptive, but the difference between 'logsigmoid' and 'linear' is usually negligible.", "choices": ["logsigmoid", "linear"]}
     )
+    print_entropy: bool = field(
+        default=False, metadata={"help": "Print entropy during training"}
+    )
 
 
 @dataclass

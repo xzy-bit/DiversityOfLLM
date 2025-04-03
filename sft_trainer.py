@@ -23,11 +23,13 @@ class SFTTrainer(Trainer):
         shift_logits = shift_logits[mask]
         shift_labels = shift_labels[mask]
 
-        entropy = chunked_entropy_from_logits(
-            shift_logits,
-            chunk_size=max(1, shift_logits.size(0) // 4),
-        ).mean()
-        training_logs = {"entropy": round(entropy.item(), 2)}
+        training_logs = {}
+        if self.args.print_entropy:
+            entropy = chunked_entropy_from_logits(
+                shift_logits,
+                batch_size=max(1, shift_logits.size(0) // 4),
+            ).mean()
+            training_logs["entropy"] = round(entropy.item(), 2)
 
         return training_logs
 
@@ -223,4 +225,7 @@ def chunked_entropy_from_logits(chunk_logits, batch_size=None):
         entropy_list.append(entropy_batch)  # Store entropy for the current batch
 
     # Concatenate results from all batches
-    return torch.cat(entropy_list, dim=0)
+    if len(entropy_list) > 0:
+        return torch.cat(entropy_list, dim=0)
+    else:
+        return torch.tensor(0.0)

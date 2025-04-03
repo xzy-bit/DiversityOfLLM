@@ -2,13 +2,19 @@
 
 Welcome to the official PyTorch implementation of **GEM**! 🎉
 
-GEM was introduced in our [ICLR 2025 paper](https://openreview.net/forum?id=dulz3WVhMR) "Preserving Diversity in Supervised Fine-tuning of Large Language Models". This work was previously titled "Entropic Distribution Matching in Supervised Fine-tuning of LLMs: Less Overfitting and Better Diversity" and received the Best Paper Runner-up Award at the NeurIPS 2024 FITML Workshop.
+GEM was introduced in our [ICLR 2025 paper](https://openreview.net/forum?id=dulz3WVhMR) **"Preserving Diversity in Supervised Fine-tuning of Large Language Models"**. 
+
+> This work was previously titled "Entropic Distribution Matching in Supervised Fine-tuning of LLMs: Less Overfitting and Better Diversity" and received the Best Paper Runner-up Award at the NeurIPS 2024 FITML Workshop.
 
 <img src='./img/gem_vs_ce.png' width='700'>
 
-GEM can replace the CE loss during SFT to preserve diversity and mitigate overfitting. 🌍✨
+GEM can replace the CE loss during SFT (supervised fine-tuning) or RFT (reinforced fine-tuning) to preserve diversity and mitigate overfitting. 🌍✨ 
+
+For an overview of GEM, please refer to our [presentation slides](docs/GEM-2025-03-23.pdf).
 
 For more insights on GEM's potential to enhance RL training through improved cold-start strategies, check out our blog post: ["Can Better Cold-Start Strategies Improve RL Training for LLMs?"](https://tangible-polo-203.notion.site/Can-Better-Cold-Start-Strategies-Improve-RL-Training-for-LLMs-17aa0742a51680828616c867ed53bc6b)
+
+<img src='./img/gem_with_remax.png' width='700'>
 
 ## Quickstart Guide 💻
 
@@ -46,6 +52,8 @@ bash scripts/tokenize_data.sh
 ```bash
 bash scripts/train_gem_ultrafeedback.sh
 ```
+
+> **Note:** The `ce_loss` metric in training logs represents the cross-entropy loss calculated on a single machine without accounting for gradient accumulation. This value may differ from the reported `loss` metric. When monitoring training progress, you can use `ce_loss` as a diagnostic indicator to verify proper training behavior—the cross-entropy loss should decrease over time regardless of whether you're using CE or GEM as your primary loss function.
 
 ### Evaluation 🧪
 
