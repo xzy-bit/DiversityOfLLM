@@ -96,9 +96,9 @@ class Arguments:
             if "if_eval" in self.dataset_path:
                 self.split = "train"
             if "poem_generation" in self.dataset_path:
-                self.split = "train"
+                self.split = "test"
             if "story_generation" in self.dataset_path:
-                self.split = "train"
+                self.split = "test"
 
         if self.standard_format is None:
             if "tatsu-lab/alpaca_eval" in self.dataset_path:
