@@ -235,7 +235,7 @@ def main():
     train_result = trainer.train(resume_from_checkpoint=checkpoint)
     if "llama-3" in model.config.name_or_path.lower() and isinstance(model.generation_config.eos_token_id, int):
         model.generation_config.eos_token_id = [128001, 128009]
-    # trainer.save_model()  # Saves the tokenizer too for easy upload
+    trainer.save_model()  # Saves the tokenizer too for easy upload
 
     metrics = train_result.metrics
     metrics["train_samples"] = len(train_dataset)
