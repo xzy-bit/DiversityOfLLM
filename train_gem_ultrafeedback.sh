@@ -13,6 +13,7 @@ export HF_DATASETS_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export FLASH_ATTENTION_DETERMINISTIC="1"
 export MODEL_NAME="llama-3.2_1b"
+export CUDA_VISIBLE_DEVICES=0,1,2
 
 TRAIN_TOKENIZED_FILE="./data/ultrafeedback_sft_train_${MODEL_NAME}_tokenized.jsonl"
 TEST_TOKENIZED_FILE="./data/ultrafeedback_sft_test_${MODEL_NAME}_tokenized.jsonl"
