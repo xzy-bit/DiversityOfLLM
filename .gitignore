@@ -9,7 +9,7 @@ __pycache__/
 # Result
 result/
 log/
-
+prepare_work/load_llama3.2_1b.py
 # Distribution / packaging
 .idea
 .Python
