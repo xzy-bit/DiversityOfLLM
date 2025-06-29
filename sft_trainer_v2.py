@@ -183,7 +183,7 @@ class SFTTrainer(Trainer):
             elif self.args.loss == "ads":
                 loss = self.ads_loss(
                     outputs.logits,
-                    inputsp["labels"]
+                    inputs["labels"]
                 )
 
         if self.args.average_tokens_across_devices and self.model_accepts_loss_kwargs:
