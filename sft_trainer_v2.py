@@ -11,7 +11,7 @@ from transformers.trainer import (
 )
 from typing import List, Optional, Dict
 from utils.gem_triton_loss import GEMLoss
-
+from utils.sparsemax import Sparsemax
 
 class SFTTrainer(Trainer):
 
@@ -33,6 +33,31 @@ class SFTTrainer(Trainer):
             training_logs["entropy"] = round(entropy.item(), 2)
 
         return training_logs
+
+    #----------------------------------------------------#
+    # ----------------------------------------------------#
+    # ----------------------------------------------------#
+
+    def ads_loss(self, logits, labels, r= 2, eps = 1e-8):
+        shift_logits = logits[..., :-1, :].contiguous()
+        shift_labels = labels[..., 1:].contiguous()
+
+        mask = shift_labels != -100
+        shift_logits = shift_logits[mask]  # N * V , Num tokens * vocab size
+        # shift_labels = shift_labels[mask]  # N, The index of token
+
+
+        sp = Sparsemax()
+        p = sp(shift_logits) + eps
+        p_sharp = p ** r
+        q = p_sharp / p_sharp.sum(dim=-1, keepdim=True)
+        log_q = q.log()
+        loss = F.kl_div(log_q, p, reduction= "batchmean", log_target= False)
+        return loss
+
+    # ----------------------------------------------------#
+    # ----------------------------------------------------#
+    # ----------------------------------------------------#
 
     def gem_loss(self, logits, labels, num_items_in_batch, beta=0.7, ignore_index=-100, h="logsigmoid"):
         shift_logits = logits[..., :-1, :].contiguous()
