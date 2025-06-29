@@ -33,7 +33,7 @@ deepspeed train.py \
     --train_tokenized_file $TRAIN_TOKENIZED_FILE \
     --test_tokenized_file $TEST_TOKENIZED_FILE \
     --output_dir $OUTPUT_DIR \
-    --per_device_train_batch_size 4 \
+    --per_device_train_batch_size 8 \
     --gradient_accumulation_steps 4 \
     --save_strategy "no" \
     --loss "ce" \

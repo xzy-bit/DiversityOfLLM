@@ -5,13 +5,13 @@ set -x
 
 export HF_DATASETS_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
-export CUDA_VISIBLE_DEVICES="0"
+export CUDA_VISIBLE_DEVICES=2
 export HF_HOME="/data/huggingface_cache"
 
-TEST_NUM=2
-MODEL_PATH="./log/sft_ce-llama-3.2_1b-ultrafeedback-2025-06-28-12-30-01-1234"
+TEST_NUM=1
+MODEL_PATH="meta-llama/Llama-3.2-1B"
 TOKENIZER_PATH="meta-llama/Llama-3.2-1B-Instruct"
-MODEL_NAME="sft_ce_llama-3.2-1b"
+MODEL_NAME="origin_llama-3.2-1b"
 RESPONSE_PATH="./log/response"
 SAVED_PATH="./log"
 SEED=42

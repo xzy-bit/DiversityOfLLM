@@ -13,11 +13,11 @@ export HF_DATASETS_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export FLASH_ATTENTION_DETERMINISTIC="1"
 export MODEL_NAME="llama-3.2_1b"
-export CUDA_VISIBLE_DEVICES=0,1,2
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 TRAIN_TOKENIZED_FILE="./data/ultrafeedback_sft_train_${MODEL_NAME}_tokenized.jsonl"
 TEST_TOKENIZED_FILE="./data/ultrafeedback_sft_test_${MODEL_NAME}_tokenized.jsonl"
-MODEL_NAME_OR_PATH="meta-llama/Llama-3.1-8B"
+MODEL_NAME_OR_PATH="meta-llama/Llama-3.2-1B"
 SEED=1234
 
 TIME_STEP=`date "+%Y-%m-%d-%H-%M-%S"`
@@ -32,9 +32,8 @@ deepspeed train.py \
     --train_tokenized_file $TRAIN_TOKENIZED_FILE \
     --test_tokenized_file $TEST_TOKENIZED_FILE \
     --output_dir $OUTPUT_DIR \
-    --per_device_train_batch_size 4 \
+    --per_device_train_batch_size 8 \
     --gradient_accumulation_steps 4 \
-    --evaluation_strategy "epoch" \
     --loss "gem" \
     --gem_beta 0.7 \
     --gem_h "logsigmoid" \
