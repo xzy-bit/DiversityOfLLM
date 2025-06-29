@@ -41,20 +41,24 @@ parser.add_argument(
     type=str,
     required=True
 )
+parser.add_argument("--sft_path",type=str)
+parser.add_argument("--usft_path",type=str)
 parser.add_argument("--max_seq_length", type=int, default=4096)
 parser.add_argument("--preprocessing_num_workers", type=int, default=64)
+parser.add_argument("--proportion", type=float, default=1.0)
 args = parser.parse_args()
 
 tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_name_or_path)
 print(f"load tokenizer from {args.tokenizer_name_or_path} done.")
 max_seq_length = args.max_seq_length
+proportion = args.proportion
 
 input_data = load_dataset(args.dataset_name_or_path)
 if args.split:
     input_data = input_data[args.split]
 if args.end is None:
     args.end = len(input_data)
-input_data = input_data.select(range(args.start, args.end))
+input_data = input_data.select(range(args.start, args.end)).shuffle(seed=42)
 print(
     f"load input data from {args.dataset_name_or_path} done. len(input_data): {len(input_data)}"
 )
@@ -151,13 +155,40 @@ def encode_sft_example(example, verbose=False):
 
 print(encode_sft_example(input_data[0], verbose=True))
 
-tokenized_data = []
-with Pool(args.preprocessing_num_workers) as p:
-    pbar = tqdm(input_data, desc=f"tokenizing")
-    for tokenized_example in p.imap(encode_sft_example, pbar):
-        dump = json.dumps(tokenized_example)
-        tokenized_data.append(dump)
+if abs(proportion-1.0)<1e-6:
+    tokenized_data = []
+    with Pool(args.preprocessing_num_workers) as p:
+        pbar = tqdm(input_data, desc=f"tokenizing")
+        for tokenized_example in p.imap(encode_sft_example, pbar):
+            dump = json.dumps(tokenized_example)
+            tokenized_data.append(dump)
 
-with open(args.output_file, "w") as fw:
-    for dump in tokenized_data:
-        fw.write(dump + "\n")
+    with open(args.output_file, "w") as fw:
+        for dump in tokenized_data:
+            fw.write(dump + "\n")
+
+else:
+    sft_tokenized_data = []
+    usft_tokenized_data = []
+    sft_data = input_data.select(range(int(len(input_data)*proportion)))
+    usft_data = input_data.select(range(int(len(input_data)*proportion),args.end))
+
+    with Pool(args.preprocessing_num_workers) as p:
+        pbar_sft = tqdm(sft_data, desc=f"tokenizing supervised data")
+        for tokenized_example in p.imap(encode_sft_example, pbar_sft):
+            dump = json.dumps(tokenized_example)
+            sft_tokenized_data.append(dump)
+
+    with open(args.sft_path, "w") as fw:
+        for dump in sft_tokenized_data:
+            fw.write(dump + "\n")
+
+    with Pool(args.preprocessing_num_workers) as p:
+        pbar = tqdm(usft_data, desc=f"tokenizing unsupervied data")
+        for tokenized_example in p.imap(encode_sft_example, pbar):
+            dump = json.dumps(tokenized_example)
+            usft_tokenized_data.append(dump)
+
+    with open(args.usft_path, "w") as fw:
+        for dump in usft_tokenized_data:
+            fw.write(dump + "\n")
