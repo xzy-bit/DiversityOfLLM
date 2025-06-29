@@ -15,7 +15,7 @@ T=0.0
 K=-1
 P=1.0
 
-python analysis/evaluation/evaluation_gsm8k.py \
+python evaluation/evaluation_gsm8k.py \
     --model_name_or_path $MODEL_PATH \
     --tokenizer_name_or_path $TOKENIZER_PATH \
     --dataset_name_or_path $DATA_PATH \
