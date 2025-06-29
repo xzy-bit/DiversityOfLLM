@@ -180,6 +180,11 @@ class SFTTrainer(Trainer):
                     beta=self.args.gem_beta, 
                     h=self.args.gem_h
                 )
+            elif self.args.loss == "ads":
+                loss = self.ads_loss(
+                    outputs.logits,
+                    inputsp["labels"]
+                )
 
         if self.args.average_tokens_across_devices and self.model_accepts_loss_kwargs:
             loss *= self.accelerator.num_processes

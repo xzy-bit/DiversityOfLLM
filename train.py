@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 class TrainingArguments(transformers.TrainingArguments):
     adam_beta2: float = field(default=0.95, metadata={"help": "Beta2 for AdamW"})
     loss: str = field(
-        default="gem", metadata={"help": "Loss name", "choices": ["gem", "ce", "gem_triton"]}
+        default="gem", metadata={"help": "Loss name", "choices": ["gem", "ce", "gem_triton", "ads"]}
     )
     gem_beta: float = field(default=0.7, metadata={"help": "Hyper-parameter in GEM. A value between 0 and 1. A value close to 1.0 makes GEM behave more like CE, while a value close to 0.0 preserves more diversity."})
     gem_h: str = field(
