@@ -37,8 +37,8 @@ python  evaluation/generate_response.py \
 
 python evaluation/evaluation_reward.py \
     --model_name_or_path $REWARD_MODEL \
-    --batch_size 8 \
+    --batch_size 2 \
     --detokenizer_path $TOKENIZER_PATH \
     --data_path "${RESPONSE_PATH}/${MODEL_NAME}_alpaca_eval-seed_${SEED}-n_${N}-T_${T}-K_${K}-P_${P}.json" \
     --save_path "${RESPONSE_PATH}/${MODEL_NAME}_alpaca_eval-seed_${SEED}-n_${N}-T_${T}-K_${K}-P_${P}-reward.json"  \
-    2>&1 | tee "./log/${WINRATE}/${MODEL_NAME}_reward_eval-seed_${SEED}-n_${N}-T_${T}-K_${K}-P_${P}.log"
+    2>&1 | tee "${WINRATE}/${MODEL_NAME}_reward_eval-seed_${SEED}-n_${N}-T_${T}-K_${K}-P_${P}.log"

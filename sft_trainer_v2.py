@@ -48,10 +48,10 @@ class SFTTrainer(Trainer):
 
 
         sp = Sparsemax()
-        p = sp(shift_logits) + eps
+        p = sp(shift_logits)
         p_sharp = p ** r
         q = p_sharp / p_sharp.sum(dim=-1, keepdim=True)
-        log_q = q.log()
+        log_q = (q + eps).log()
         loss = F.kl_div(log_q, p, reduction= "batchmean", log_target= False)
         return loss
 

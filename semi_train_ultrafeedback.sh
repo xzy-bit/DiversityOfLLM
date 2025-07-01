@@ -13,7 +13,7 @@ export HF_DATASETS_OFFLINE=1
 export TRANSFORMERS_OFFLINE=1
 export FLASH_ATTENTION_DETERMINISTIC="1"
 export MODEL_NAME="llama-3.2_1b"
-export CUDA_VISIBLE_DEVICES=0,1,2
+export CUDA_VISIBLE_DEVICES=0,1,2,3
 
 TEST_TOKENIZED_FILE="./data/ultrafeedback_sft_test_${MODEL_NAME}_tokenized.jsonl"
 LABELED_FILE="./data/ultrafeedback_sft_labeled_${MODEL_NAME}_tokenized.jsonl"
@@ -24,7 +24,7 @@ SEED=1234
 P=0.5
 
 TIME_STEP=`date "+%Y-%m-%d-%H-%M-%S"`
-LABELED_OUTPUT_DIR="./log/sft_P_${P}_ce-${MODEL_NAME}-ultrafeedback-$TIME_STEP-$SEED"
+LABELED_OUTPUT_DIR="./log/sft_P_${P}_gem-${MODEL_NAME}-ultrafeedback-$TIME_STEP-$SEED"
 UNLABELED_OUTPUT_DIR="./log/sft_P_${P}_ads-${MODEL_NAME}-ultrafeedback-$TIME_STEP-$SEED"
 mkdir -p $LABELED_OUTPUT_DIR
 mkdir -p $UNLABELED_OUTPUT_DIR
@@ -39,7 +39,7 @@ deepspeed train.py \
     --per_device_train_batch_size 8 \
     --gradient_accumulation_steps 4 \
     --save_strategy "no" \
-    --loss "ce" \
+    --loss "gem" \
     --learning_rate 2e-5 \
     --lr_scheduler_type cosine \
     --warmup_ratio 0.03 \
@@ -50,7 +50,7 @@ deepspeed train.py \
     --overwrite_output_dir \
     --bf16 True \
     2>&1 | tee $LABELED_OUTPUT_DIR/training.log
-
+<<Blocked
 deepspeed train.py \
     --deepspeed scripts/zero2.json \
     --seed $SEED \
@@ -71,4 +71,5 @@ deepspeed train.py \
     --gradient_checkpointing True \
     --overwrite_output_dir \
     --bf16 True \
-    2>&1 | tee $UNLABELED_OUTPUT_DIR/training.log
+    2>&1 | tee $UNLABELED_OUTPUT_DIR/training.logi
+Blocked
