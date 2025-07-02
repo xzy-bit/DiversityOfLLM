@@ -37,23 +37,48 @@ class SFTTrainer(Trainer):
     #----------------------------------------------------#
     # ----------------------------------------------------#
     # ----------------------------------------------------#
-
-    def ads_loss(self, logits, labels, r= 2, eps = 1e-8):
+    def sparsemax_ce_loss(self, logits, labels,num_items_in_batch=None):
         shift_logits = logits[..., :-1, :].contiguous()
         shift_labels = labels[..., 1:].contiguous()
 
         mask = shift_labels != -100
-        shift_logits = shift_logits[mask]  # N * V , Num tokens * vocab size
-        # shift_labels = shift_labels[mask]  # N, The index of token
+        shift_logits = shift_logits[mask]
+        shift_labels = shift_labels[mask]
 
+        sparsemax = Sparsemax(dim=-1)
+        probs = sparsemax(shift_logits)
 
-        sp = Sparsemax()
-        p = sp(shift_logits)
-        p_sharp = p ** r
-        q = p_sharp / p_sharp.sum(dim=-1, keepdim=True)
-        log_q = (q + eps).log()
-        loss = F.kl_div(log_q, p, reduction= "batchmean", log_target= False)
+        true_probs = torch.gather(
+                probs, dim=-1, index=shift_labels.unsqueeze(-1)
+            ).squeeze(-1)
+
+        if num_items_in_batch is not None:
+            loss = -torch.sum(
+                torch.log(true_probs +1e-8), dim=-1
+            ).sum() / num_items_in_batch
+        else:
+            loss = -torch.sum(
+                torch.log(true_probs +1e-8), dim=-1
+            ).mean()
+
         return loss
+
+    # def ads_loss(self, logits, labels, r= 2, eps = 1e-8):
+    #     shift_logits = logits[..., :-1, :].contiguous()
+    #     shift_labels = labels[..., 1:].contiguous()
+    #
+    #     mask = shift_labels != -100
+    #     shift_logits = shift_logits[mask]  # N * V , Num tokens * vocab size
+    #     # shift_labels = shift_labels[mask]  # N, The index of token
+    #
+    #
+    #     sp = Sparsemax(dim = -1)
+    #     p = sp(shift_logits)
+    #     p_sharp = p ** r
+    #     q = p_sharp / p_sharp.sum(dim=-1, keepdim=True)
+    #     log_q = (q + eps).log()
+    #     loss = F.kl_div(log_q, p, reduction= "batchmean", log_target= False)
+    #     return loss
 
     # ----------------------------------------------------#
     # ----------------------------------------------------#
@@ -184,6 +209,12 @@ class SFTTrainer(Trainer):
                 loss = self.ads_loss(
                     outputs.logits,
                     inputs["labels"]
+                )
+            elif self.arg.loss == "sl":
+                loss = self.sparsemax_ce_loss(
+                    outputs.logits,
+                    inputs["labels"],
+                    num_items_in_batch=num_items_in_batch,
                 )
 
         if self.args.average_tokens_across_devices and self.model_accepts_loss_kwargs:
