@@ -210,7 +210,7 @@ class SFTTrainer(Trainer):
                     outputs.logits,
                     inputs["labels"]
                 )
-            elif self.arg.loss == "sl":
+            elif self.args.loss == "sl":
                 loss = self.sparsemax_ce_loss(
                     outputs.logits,
                     inputs["labels"],

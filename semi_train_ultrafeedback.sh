@@ -24,7 +24,7 @@ SEED=1234
 P=0.5
 
 TIME_STEP=`date "+%Y-%m-%d-%H-%M-%S"`
-LABELED_OUTPUT_DIR="./log/sft_P_${P}_gem-${MODEL_NAME}-ultrafeedback-$TIME_STEP-$SEED"
+LABELED_OUTPUT_DIR="./log/sft_P_${P}_sl_-${MODEL_NAME}-ultrafeedback-$TIME_STEP-$SEED"
 UNLABELED_OUTPUT_DIR="./log/sft_P_${P}_ads-${MODEL_NAME}-ultrafeedback-$TIME_STEP-$SEED"
 mkdir -p $LABELED_OUTPUT_DIR
 mkdir -p $UNLABELED_OUTPUT_DIR
@@ -39,7 +39,7 @@ deepspeed train.py \
     --per_device_train_batch_size 8 \
     --gradient_accumulation_steps 4 \
     --save_strategy "no" \
-    --loss "gem" \
+    --loss "sl" \
     --learning_rate 2e-5 \
     --lr_scheduler_type cosine \
     --warmup_ratio 0.03 \

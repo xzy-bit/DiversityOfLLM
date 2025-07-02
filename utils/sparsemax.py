@@ -9,7 +9,7 @@ from __future__ import division
 import torch
 import torch.nn as nn
 
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class Sparsemax(nn.Module):
     """Sparsemax function."""
 
