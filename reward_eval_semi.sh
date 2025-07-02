@@ -9,8 +9,8 @@ export CUDA_VISIBLE_DEVICES=3
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 DATA_PATH="tatsu-lab/alpaca_eval"
-MODEL_NAME="sft_ce_llama-3.2-1b_Prob_0.2"
-MODEL_PATH="./log/sft_P_0.2_ce-llama-3.2_1b-ultrafeedback-2025-06-30-00-37-33-1234"
+MODEL_NAME="sft_gem_llama-3.2-1b_Prob_0.2"
+MODEL_PATH="./log/sft_P_0.2_gem-llama-3.2_1b-ultrafeedback-2025-07-01-04-33-24-1234"
 TOKENIZER_PATH="meta-llama/Llama-3.2-1B-Instruct"
 REWARD_MODEL="sfairXC/FsfairX-LLaMA3-RM-v0.1"
 RESPONSE_PATH="./log/response"

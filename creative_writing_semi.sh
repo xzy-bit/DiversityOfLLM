@@ -8,9 +8,9 @@ export TRANSFORMERS_OFFLINE=1
 export CUDA_VISIBLE_DEVICES=0
 export HF_HOME="/data/huggingface_cache"
 
-MODEL_PATH="./log/sft_P_0.2_ce-llama-3.2_1b-ultrafeedback-2025-06-30-00-37-33-1234"
+MODEL_PATH="./log/sft_P_0.5_gem-llama-3.2_1b-ultrafeedback-2025-07-01-02-45-35-1234"
 TOKENIZER_PATH="meta-llama/Llama-3.2-1B-Instruct"
-MODEL_NAME="semi_ce_llama-3.2-1b_Prob_0.2"
+MODEL_NAME="semi_gem_llama-3.2-1b_Prob_0.5"
 RESPONSE_PATH="./log/response"
 SAVED_PATH="./log"
 SEED=42
